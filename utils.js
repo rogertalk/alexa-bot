@@ -110,7 +110,7 @@ exports.promisedRequest = function promisedRequest(options) {
           case 'header-value':
             const k = i;
             if (line()) {
-              headers[key] = body.slice(j, k).toString();
+              headers[key.toLowerCase()] = body.slice(j, k).toString();
               j = i;
               state = 'header-key';
               continue;

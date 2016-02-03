@@ -4,7 +4,7 @@ const config = require('./secrets/alexa.json');
 const utils = require('./utils');
 
 // Static message body that the Alexa Voice Service expects.
-const message = {
+const recognizeMessage = {
   messageHeader: {
     deviceContext: [
       {
@@ -18,26 +18,25 @@ const message = {
       },
     ],
   },
-  'messageBody': {
+  messageBody: {
     profile: 'alexa-close-talk',
     locale: 'en-us',
     format: 'audio/L16; rate=16000; channels=1',
   },
 };
 
-// Creates an options object for the request package.
-function createOptions(accessToken, buffer) {
+function createRecognizeOptions(accessToken, audioBuffer) {
   return {
     encoding: null,
     formData: {
       request: {
-        value: JSON.stringify(message),
+        value: JSON.stringify(recognizeMessage),
         options: {
           contentType: 'application/json; charset=UTF-8',
         },
       },
       audio: {
-        value: buffer,
+        value: audioBuffer,
         options: {
           contentType: 'audio/L16; rate=16000; channels=1',
         },
@@ -53,7 +52,7 @@ function createOptions(accessToken, buffer) {
 
 // Finds all the audio files in the response and resolves to a list of audio metadata.
 function getAudioMetadata(parts) {
-  parts = parts.filter(p => p.headers['Content-Type'] == 'audio/mpeg');
+  parts = parts.filter(p => p.headers['content-type'] == 'audio/mpeg');
   const promises = parts.map(p => utils.bufferDuration(p.body));
   return Promise.all(promises).then(durations => {
     return durations.map((duration, i) => {
@@ -84,7 +83,7 @@ exports.exchangeRefreshToken = function exchangeRefreshToken(token) {
 // Asks the Amazon Voice Service to recognize the speech in the provided audio file.
 exports.recognize = function recognize(accessToken, stream) {
   return utils.streamToBuffer(stream)
-    .then(buffer => createOptions(accessToken, buffer))
+    .then(buffer => createRecognizeOptions(accessToken, buffer))
     .then(utils.promisedRequest)
     .then(getAudioMetadata);
 };
