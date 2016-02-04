@@ -46,6 +46,10 @@ exports.promisedRequest = function promisedRequest(options) {
         resolve(body);
         return;
       }
+      if (res.statusCode == 204) {
+        resolve([]);
+        return;
+      }
       const typeParts = res.headers['content-type'].split(/\s*;\s*/g);
       // Amazon uses multipart/related for some of their responses, which isn't well supported.
       if (typeParts.shift() == 'multipart/related') {

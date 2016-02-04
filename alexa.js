@@ -50,6 +50,52 @@ function createRecognizeOptions(accessToken, audioBuffer) {
   };
 }
 
+function exhaustAudioPlayer(accessToken, parts, previousParts) {
+  // Find the most recent JSON data object.
+  let body;
+  for (let part of parts) {
+    if (part.headers['content-type'] == 'application/json') {
+      const data = JSON.parse(part.body.toString('utf8'));
+      if (data.messageBody) body = data.messageBody;
+      break;
+    }
+  }
+  if (previousParts) {
+    parts = previousParts.concat(parts);
+  }
+  if (!body) return parts;
+  // Look for a navigation token in the JSON data.
+  let navigationToken;
+  if (body.navigationToken) {
+    navigationToken = body.navigationToken;
+  } else if (body.directives) {
+    for (let directive of body.directives) {
+      if (directive.namespace != 'AudioPlayer' || !directive.payload.navigationToken) {
+        continue;
+      }
+      navigationToken = directive.payload.navigationToken;
+      break;
+    }
+  }
+  if (!navigationToken) return parts;
+  // Request the next audio item.
+  const payload = {
+    messageHeader: {},
+    messageBody: {navigationToken},
+  };
+  const options = {
+    encoding: null,
+    body: JSON.stringify(payload),
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+    url: 'https://access-alexa-na.amazon.com/v1/avs/audioplayer/getNextItem',
+  };
+  return utils.promisedRequest(options).then(newParts => exhaustAudioPlayer(accessToken, newParts, parts));
+}
+
 // Finds all the audio files in the response and resolves to a list of audio metadata.
 function getAudioMetadata(parts) {
   parts = parts.filter(p => p.headers['content-type'] == 'audio/mpeg');
@@ -85,5 +131,6 @@ exports.recognize = function recognize(accessToken, stream) {
   return utils.streamToBuffer(stream)
     .then(buffer => createRecognizeOptions(accessToken, buffer))
     .then(utils.promisedRequest)
+    .then(parts => exhaustAudioPlayer(accessToken, parts))
     .then(getAudioMetadata);
 };
