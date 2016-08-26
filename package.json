@@ -9,9 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "fluent-ffmpeg": "^2.0.1",
-    "gcloud": "^0.27.0",
-    "request": "^2.67.0",
+    "fluent-ffmpeg": "^2.1.0",
+    "google-cloud": "^0.38.3",
+    "request": "^2.74.0",
     "tmp": "0.0.28"
   }
 }

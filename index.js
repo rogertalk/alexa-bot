@@ -7,13 +7,13 @@ const alexa = require('./alexa');
 const roger = require('./roger');
 const utils = require('./utils');
 
+const gcloud = require('google-cloud');
+
 // If you want to try this with your own App Engine project, you need to change the project id below.
-const gcloud = require('gcloud')({
+const datastore = gcloud.datastore({
   projectId: 'roger-web-client',
   keyFilename: 'secrets/gcloud.json',
 });
-
-const dataset = gcloud.datastore.dataset();
 
 // Resolves to an Amazon access token, exchanging the refresh token for a new access token if necessary.
 function getAccessToken(entity) {
@@ -28,7 +28,7 @@ function getAccessToken(entity) {
     entity.data.LastRefresh = new Date();
     entity.data.RefreshToken = data.refresh_token;
     entity.data.TokenType = data.token_type
-    dataset.save(entity, error => {
+    datastore.save(entity, error => {
       if (error) console.error('Failed to store auth data', error);
     });
     return data.access_token;
@@ -38,7 +38,7 @@ function getAccessToken(entity) {
 // Requests Amazon authentication details from the Datastore API.
 function getAuthData(accountId) {
   return new Promise((resolve, reject) => {
-    dataset.get(dataset.key(['AlexaAuthData', `account_${accountId}`]), (error, entity) => {
+    datastore.get(datastore.key(['AlexaAuthData', `account_${accountId}`]), (error, entity) => {
       if (error) reject(error);
       else if (!entity) reject('Could not find auth data');
       else resolve(entity);
