@@ -48,7 +48,7 @@ function getAuthData(accountId) {
 
 // Sends the provided audio data (an answer by Alexa) back to the stream on Roger.
 function sendAnswer(streamId, answer) {
-  return roger.api(`/v9/streams/${streamId}/chunks?duration=${answer.duration}`, {
+  return roger.api(`/v21/streams/${streamId}/chunks?duration=${answer.duration}`, {
     audio: {
       value: answer.buffer,
       options: {
@@ -62,8 +62,7 @@ function sendAnswer(streamId, answer) {
 // Handles the incoming audio and asks Alexa to respond to it.
 function respond(data) {
   // Kick off a parallel request that tells the user Alexa "listened".
-  roger.api(`/v9/streams/${data.stream.id}?played_until=${data.chunk.end}`, {});
-  roger.api(`/v9/streams/${data.stream.id}?status=talking`, {});
+  roger.api(`/v21/streams/${data.stream.id}?status=talking`, {});
   // Convert the incoming audio to the appropriate Wave format while we get authentication data.
   const wave = utils.streamToWaveStream(request(data.chunk.audio_url));
   // Get the Amazon Voice Service access token for the sender.
@@ -75,7 +74,7 @@ function respond(data) {
         return seq.then(() => sendAnswer(data.stream.id, a))
       }, Promise.resolve());
       promise.then(() => {
-        roger.api(`/v9/streams/${data.stream.id}?status=idle`, {});
+        roger.api(`/v21/streams/${data.stream.id}?status=idle`, {});
       });
     })
     .catch(error => console.error('Failed to handle chunk:', error.toString()));
