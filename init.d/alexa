@@ -1,0 +1,36 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          alexa
+# Required-Start:
+# Required-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: alexa
+# Description:       alexa daemon
+### END INIT INFO
+
+# explanation
+# http://stackoverflow.com/questions/32178443/how-to-run-pm2-so-other-server-users-are-able-to-access-the-process
+# https://github.com/Unitech/pm2/issues/837
+
+case "$1" in
+    start)
+        cd /var/pm2/alexa/
+        echo "Starting Alexa server..."
+        env HOME=/var/pm2 pm2 start index.js
+        ;;
+    stop)
+        echo "Stopping Alexa server..."
+        env HOME=/var/pm2 pm2 stop index
+        ;;
+    list)
+        sudo HOME=/var/pm2 pm2 list
+        ;;
+    *)
+        echo "Usage: /etc/init.d/alexa {start|stop|list}"
+        exit 1
+        ;;
+esac
+
+exit 0
